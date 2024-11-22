@@ -44,44 +44,96 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import {
-  Activity,
-  ShoppingCart,
-  Users,
-  Calendar,
-  DollarSign,
-  Package,
   Menu,
   Plus,
   Trash2,
-  X,
+  LayoutDashboard,
+  Users,
+  ShoppingBag,
+  DollarSign,
+  Activity,
+  UserCheck,
 } from "lucide-react";
+
+const shopItems = [
+  {
+    id: "AT-1435626",
+    name: "Tormaline OFG-19 Eng",
+    warehouse: "Jakarta",
+    quantity: 152,
+  },
+  {
+    id: "AT-1435627",
+    name: "Tormaline OFG-19 Eng",
+    warehouse: "Jakarta",
+    quantity: 262,
+  },
+  {
+    id: "AT-1435628",
+    name: "Tormaline OFG-19 Eng",
+    warehouse: "Jakarta",
+    quantity: 205,
+  },
+  {
+    id: "AT-1435629",
+    name: "Tormaline OFG-19 Eng",
+    warehouse: "Jakarta",
+    quantity: 183,
+  },
+  {
+    id: "MN-1435630",
+    name: "Pxeto Jarvis Kursi Ka",
+    warehouse: "Jakarta",
+    quantity: 152,
+  },
+  {
+    id: "MN-1435631",
+    name: "Pxeto Jarvis Kursi Ka",
+    warehouse: "Jakarta, Bandung",
+    quantity: 83,
+  },
+  {
+    id: "SR-1435632",
+    name: "Oxihom Ft-3 Kursi Ka",
+    warehouse: "Jakarta, Bandung",
+    quantity: 241,
+  },
+  {
+    id: "SR-1435633",
+    name: "Oxihom Ft-3 Kursi Ka",
+    warehouse: "Jakarta, Bandung",
+    quantity: 377,
+  },
+  {
+    id: "PL-1435634",
+    name: "Dell Office Chair / Ku",
+    warehouse: "Bandung",
+    quantity: 236,
+  },
+  {
+    id: "PL-1435635",
+    name: "Dell Office Chair / Ku",
+    warehouse: "Bandung",
+    quantity: 124,
+  },
+];
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [cart, setCart] = useState([]);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  // Members State
   const [members, setMembers] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [newMember, setNewMember] = useState({
     name: "",
     email: "",
     plan: "Basic",
     status: "Active",
   });
-  const [memberFilter, setMemberFilter] = useState({
-    plan: "All",
-    status: "All",
-  });
 
-  // Sample data for shop and other sections
-  const shopItems = [
-    { id: 1, name: "Protein Shake", price: 29.99, stock: 50 },
-    { id: 2, name: "Gym Gloves", price: 19.99, stock: 30 },
-    { id: 3, name: "Resistance Band", price: 15.99, stock: 45 },
-  ];
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(members.length / itemsPerPage);
 
-  // Load members from localStorage on component mount
   useEffect(() => {
     const storedMembers = JSON.parse(
       localStorage.getItem("gymMembers") || "[]"
@@ -89,413 +141,436 @@ export default function Home() {
     setMembers(storedMembers);
   }, []);
 
-  // Handle adding items to cart
-  const addToCart = (item) => {
-    setCart([...cart, item]);
-  };
-
-  // Handle adding a new member
   const handleAddMember = (e) => {
     e.preventDefault();
     const memberToAdd = {
       ...newMember,
-      id: Date.now(), // Unique identifier
+      id: Date.now(),
       joinDate: new Date().toISOString().split("T")[0],
     };
 
     const updatedMembers = [...members, memberToAdd];
     setMembers(updatedMembers);
-
-    // Save to localStorage
     localStorage.setItem("gymMembers", JSON.stringify(updatedMembers));
 
-    // Reset form
     setNewMember({
       name: "",
       email: "",
       plan: "Basic",
       status: "Active",
     });
+    setIsAddMemberOpen(false);
   };
 
-  // Handle member deletion
   const handleDeleteMember = (memberId) => {
     const updatedMembers = members.filter((member) => member.id !== memberId);
     setMembers(updatedMembers);
     localStorage.setItem("gymMembers", JSON.stringify(updatedMembers));
   };
 
-  // Filter members based on plan and status
-  const filteredMembers = members.filter(
-    (member) =>
-      (memberFilter.plan === "All" || member.plan === memberFilter.plan) &&
-      (memberFilter.status === "All" || member.status === memberFilter.status)
+  const getPaginatedMembers = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return members.slice(startIndex, endIndex);
+  };
+
+  const Sidebar = () => (
+    <div
+      className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${
+        isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      } transition-transform duration-300 ease-in-out lg:translate-x-0`}
+    >
+      <div className="p-6">
+        <h2 className="text-2xl font-bold mb-6">FitHub</h2>
+        <nav className="space-y-2">
+          <Button
+            variant={activeTab === "dashboard" ? "default" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => {
+              setActiveTab("dashboard");
+              setIsSidebarOpen(!isSidebarOpen);
+            }}
+          >
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            Dashboard
+          </Button>
+          <Button
+            variant={activeTab === "members" ? "default" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => {
+              setActiveTab("members");
+              setIsSidebarOpen(!isSidebarOpen);
+            }}
+          >
+            <Users className="mr-2 h-4 w-4" />
+            Members
+          </Button>
+          <Button
+            variant={activeTab === "shop" ? "default" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => {
+              setActiveTab("shop");
+              setIsSidebarOpen(!isSidebarOpen);
+            }}
+          >
+            <ShoppingBag className="mr-2 h-4 w-4" />
+            Shop
+          </Button>
+        </nav>
+      </div>
+    </div>
   );
 
-  // Navigation tabs
-  const navigationTabs = [
-    { id: "dashboard", label: "Dashboard", icon: Activity },
-    { id: "members", label: "Members", icon: Users },
-    { id: "shop", label: "Shop", icon: ShoppingCart },
-  ];
+  const Dashboard = () => (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Members</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{members.length}</div>
+            <p className="text-xs text-muted-foreground">
+              +20% from last month
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Monthly Revenue
+            </CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">$15,234</div>
+            <p className="text-xs text-muted-foreground">
+              +12% from last month
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Active Classes
+            </CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">12</div>
+            <p className="text-xs text-muted-foreground">
+              +2 new classes this week
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Members</CardTitle>
+          <CardDescription>Latest members who joined your gym</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Plan</TableHead>
+                <TableHead>Join Date</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {members.slice(0, 5).map((member) => (
+                <TableRow key={member.id}>
+                  <TableCell>{member.name}</TableCell>
+                  <TableCell>{member.plan}</TableCell>
+                  <TableCell>{member.joinDate}</TableCell>
+                  <TableCell>{member.status}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const MembersSection = () => (
+    <Card className="border-0 shadow-sm">
+      <CardHeader className="space-y-1 px-4 py-3 sm:px-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <CardTitle className="text-lg">Members Management</CardTitle>
+            <CardDescription>Manage your gym members</CardDescription>
+          </div>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Member
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right">
+              <SheetHeader>
+                <SheetTitle>Add New Member</SheetTitle>
+              </SheetHeader>
+              <form onSubmit={handleAddMember} className="space-y-4 mt-4">
+                <div>
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    value={newMember.name}
+                    onChange={(e) =>
+                      setNewMember({
+                        ...newMember,
+                        name: e.target.value,
+                      })
+                    }
+                    required
+                    placeholder="Enter member name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={newMember.email}
+                    onChange={(e) =>
+                      setNewMember({
+                        ...newMember,
+                        email: e.target.value,
+                      })
+                    }
+                    required
+                    placeholder="Enter email address"
+                  />
+                </div>
+                <div>
+                  <Label>Plan</Label>
+                  <Select
+                    value={newMember.plan}
+                    onValueChange={(value) =>
+                      setNewMember({ ...newMember, plan: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Plan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Basic">Basic</SelectItem>
+                      <SelectItem value="Premium">Premium</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <Select
+                    value={newMember.status}
+                    onValueChange={(value) =>
+                      setNewMember({ ...newMember, status: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button type="submit" className="w-full">
+                  Add Member
+                </Button>
+              </form>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50 hover:bg-gray-50">
+                <TableHead className="w-[200px]">Name</TableHead>
+                <TableHead className="min-w-[200px]">Email</TableHead>
+                <TableHead className="w-[150px]">Plan</TableHead>
+                <TableHead className="w-[100px]">Status</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {getPaginatedMembers().map((member) => (
+                <TableRow key={member.id} className="hover:bg-gray-50">
+                  <TableCell className="font-medium">{member.name}</TableCell>
+                  <TableCell>{member.email}</TableCell>
+                  <TableCell>{member.plan}</TableCell>
+                  <TableCell>{member.status}</TableCell>
+                  <TableCell>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="h-8 w-8"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Delete Member</DialogTitle>
+                          <DialogDescription>
+                            Are you sure you want to delete {member.name}?
+                          </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                          <DialogClose asChild>
+                            <Button variant="outline">Cancel</Button>
+                          </DialogClose>
+                          <Button
+                            variant="destructive"
+                            onClick={() => handleDeleteMember(member.id)}
+                          >
+                            Delete
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div className="flex items-center justify-between px-4 py-3 border-t">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(page)}
+                    className="w-8"
+                  >
+                    {page}
+                  </Button>
+                )
+              )}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const ShopSection = () => (
+    <Card className="border-0 shadow-sm">
+      <CardHeader className="space-y-1 px-4 py-3 sm:px-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <CardTitle className="text-lg">Shop Inventory</CardTitle>
+            <CardDescription>
+              Manage your shop items and inventory
+            </CardDescription>
+          </div>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Item
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Add New Item</SheetTitle>
+              </SheetHeader>
+              {/* Add item form would go here */}
+            </SheetContent>
+          </Sheet>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50 hover:bg-gray-50">
+                <TableHead className="w-[150px]">Product ID</TableHead>
+                <TableHead className="min-w-[200px]">Name</TableHead>
+                <TableHead className="w-[150px]">Warehouse</TableHead>
+                <TableHead className="w-[100px] text-right">Quantity</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {shopItems.map((item) => (
+                <TableRow key={item.id} className="hover:bg-gray-50">
+                  <TableCell className="font-medium">{item.id}</TableCell>
+                  <TableCell>{item.name}</TableCell>
+                  <TableCell>{item.warehouse}</TableCell>
+                  <TableCell className="text-right">{item.quantity}</TableCell>
+                  <TableCell>
+                    <Button variant="outline" size="icon" className="h-8 w-8">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      {/* Mobile Sidebar */}
-      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <SheetContent side="left" className="w-64 bg-white">
-          <SheetHeader>
-            <SheetTitle className="flex items-center">
-              <X
-                className="mr-2 h-5 w-5 cursor-pointer"
-                onClick={() => setIsSidebarOpen(false)}
-              />
-              FitHub
-            </SheetTitle>
-          </SheetHeader>
-          <div className="mt-6 space-y-2">
-            {navigationTabs.map(({ id, label, icon: Icon }) => (
-              <Button
-                key={id}
-                variant={activeTab === id ? "default" : "ghost"}
-                onClick={() => {
-                  setActiveTab(id);
-                  setIsSidebarOpen(false);
-                }}
-                className="w-full justify-start"
-              >
-                <Icon className="mr-2 h-4 w-4" />
-                {label}
-              </Button>
-            ))}
-          </div>
-        </SheetContent>
-      </Sheet>
+    <div className="min-h-screen bg-gray-100">
+      <Sidebar />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Mobile Header */}
-        <nav className="bg-white shadow-sm sticky top-0 z-50 md:hidden">
-          <div className="flex justify-between items-center p-4">
+      <div className="lg:pl-64">
+        <nav className="bg-white shadow-sm sticky top-0 z-40">
+          <div className="flex justify-between items-center px-4 py-3">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setIsSidebarOpen(true)}
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="lg:hidden"
             >
-              <Menu />
+              <Menu className="h-5 w-5" />
             </Button>
-            <span className="font-bold text-xl">FitHub</span>
-            <div></div>
+            <span className="font-bold text-lg">FitHub</span>
+            <div className="w-8"></div>
           </div>
         </nav>
 
-        {/* Desktop Sidebar */}
-        <div className="hidden md:block w-64 bg-white border-r">
-          <div className="p-4">
-            <h2 className="text-xl font-bold mb-6">FitHub</h2>
-            {navigationTabs.map(({ id, label, icon: Icon }) => (
-              <Button
-                key={id}
-                variant={activeTab === id ? "default" : "ghost"}
-                onClick={() => setActiveTab(id)}
-                className="w-full justify-start mb-2"
-              >
-                <Icon className="mr-2 h-4 w-4" />
-                {label}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* Main Content Area */}
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-          {activeTab === "dashboard" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Stats Cards */}
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium flex items-center">
-                    <Users className="mr-2 h-4 w-4" />
-                    Total Members
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{members.length}</div>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium flex items-center">
-                    <DollarSign className="mr-2 h-4 w-4" />
-                    Monthly Revenue
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">$12,345</div>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium flex items-center">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Active Classes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">15</div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {activeTab === "shop" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {shopItems.map((item) => (
-                <Card
-                  key={item.id}
-                  className="hover:shadow-lg transition-shadow"
-                >
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Package className="mr-2 h-5 w-5" />
-                      {item.name}
-                    </CardTitle>
-                    <CardDescription>In Stock: {item.stock}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex justify-between items-center">
-                      <span className="text-2xl font-bold">${item.price}</span>
-                      <Button
-                        onClick={() => addToCart(item)}
-                        disabled={item.stock === 0}
-                      >
-                        <ShoppingCart className="mr-2 h-4 w-4" />
-                        Add to Cart
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {activeTab === "members" && (
-            <div className="space-y-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Members Management</CardTitle>
-                    <CardDescription>Manage your gym members</CardDescription>
-                  </div>
-                  <Sheet>
-                    <SheetTrigger asChild>
-                      <Button>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Member
-                      </Button>
-                    </SheetTrigger>
-                    <SheetContent side="right">
-                      <SheetHeader>
-                        <SheetTitle>Add New Member</SheetTitle>
-                      </SheetHeader>
-                      <form
-                        onSubmit={handleAddMember}
-                        className="space-y-4 mt-4"
-                      >
-                        <div>
-                          <Label htmlFor="name">Name</Label>
-                          <Input
-                            id="name"
-                            value={newMember.name}
-                            onChange={(e) =>
-                              setNewMember({
-                                ...newMember,
-                                name: e.target.value,
-                              })
-                            }
-                            required
-                            placeholder="Enter member name"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            value={newMember.email}
-                            onChange={(e) =>
-                              setNewMember({
-                                ...newMember,
-                                email: e.target.value,
-                              })
-                            }
-                            required
-                            placeholder="Enter email address"
-                          />
-                        </div>
-                        <div>
-                          <Label>Plan</Label>
-                          <Select
-                            value={newMember.plan}
-                            onValueChange={(value) =>
-                              setNewMember({ ...newMember, plan: value })
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select Plan" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Basic">Basic</SelectItem>
-                              <SelectItem value="Premium">Premium</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Status</Label>
-                          <Select
-                            value={newMember.status}
-                            onValueChange={(value) =>
-                              setNewMember({ ...newMember, status: value })
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select Status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Active">Active</SelectItem>
-                              <SelectItem value="Inactive">Inactive</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <Button type="submit" className="w-full">
-                          Add Member
-                        </Button>
-                      </form>
-                    </SheetContent>
-                  </Sheet>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex space-x-4 mb-4">
-                    <Select
-                      value={memberFilter.plan}
-                      onValueChange={(value) =>
-                        setMemberFilter({ ...memberFilter, plan: value })
-                      }
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Filter by Plan" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="All">All Plans</SelectItem>
-                        <SelectItem value="Basic">Basic</SelectItem>
-                        <SelectItem value="Premium">Premium</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Select
-                      value={memberFilter.status}
-                      onValueChange={(value) =>
-                        setMemberFilter({ ...memberFilter, status: value })
-                      }
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Filter by Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="All">All Statuses</SelectItem>
-                        <SelectItem value="Active">Active</SelectItem>
-                        <SelectItem value="Inactive">Inactive</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {filteredMembers.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      No members found. Add a new member to get started.
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Plan</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Join Date</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredMembers.map((member) => (
-                          <TableRow key={member.id}>
-                            <TableCell>{member.name}</TableCell>
-                            <TableCell>{member.email}</TableCell>
-                            <TableCell>
-                              <span
-                                className={`px-2 py-1 rounded-full text-xs ${
-                                  member.plan === "Premium"
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-blue-100 text-blue-800"
-                                }`}
-                              >
-                                {member.plan}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <span
-                                className={`px-2 py-1 rounded-full text-xs ${
-                                  member.status === "Active"
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-red-100 text-red-800"
-                                }`}
-                              >
-                                {member.status}
-                              </span>
-                            </TableCell>
-                            <TableCell>{member.joinDate}</TableCell>
-                            <TableCell>
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <Button variant="destructive" size="icon">
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                  <DialogHeader>
-                                    <DialogTitle>Delete Member</DialogTitle>
-                                    <DialogDescription>
-                                      Are you sure you want to delete{" "}
-                                      {member.name}? This action cannot be
-                                      undone.
-                                    </DialogDescription>
-                                  </DialogHeader>
-                                  <DialogFooter>
-                                    <DialogClose asChild>
-                                      <Button variant="ghost">Cancel</Button>
-                                    </DialogClose>
-                                    <Button
-                                      variant="destructive"
-                                      onClick={() =>
-                                        handleDeleteMember(member.id)
-                                      }
-                                    >
-                                      Delete
-                                    </Button>
-                                  </DialogFooter>
-                                </DialogContent>
-                              </Dialog>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
+        <main className="p-4">
+          {activeTab === "dashboard" && <Dashboard />}
+          {activeTab === "members" && <MembersSection />}
+          {activeTab === "shop" && <ShopSection />}
         </main>
       </div>
     </div>
