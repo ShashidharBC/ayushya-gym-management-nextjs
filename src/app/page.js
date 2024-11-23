@@ -10,7 +10,9 @@ import {
 } from "@/components/ui/card";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -52,7 +54,6 @@ import {
   ShoppingBag,
   DollarSign,
   Activity,
-  UserCheck,
 } from "lucide-react";
 
 const shopItems = [
@@ -123,13 +124,6 @@ export default function Home() {
   const [members, setMembers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
-  const [newMember, setNewMember] = useState({
-    name: "",
-    email: "",
-    plan: "Basic",
-    status: "Active",
-  });
 
   const itemsPerPage = 10;
   const totalPages = Math.ceil(members.length / itemsPerPage);
@@ -140,27 +134,6 @@ export default function Home() {
     );
     setMembers(storedMembers);
   }, []);
-
-  const handleAddMember = (e) => {
-    e.preventDefault();
-    const memberToAdd = {
-      ...newMember,
-      id: Date.now(),
-      joinDate: new Date().toISOString().split("T")[0],
-    };
-
-    const updatedMembers = [...members, memberToAdd];
-    setMembers(updatedMembers);
-    localStorage.setItem("gymMembers", JSON.stringify(updatedMembers));
-
-    setNewMember({
-      name: "",
-      email: "",
-      plan: "Basic",
-      status: "Active",
-    });
-    setIsAddMemberOpen(false);
-  };
 
   const handleDeleteMember = (memberId) => {
     const updatedMembers = members.filter((member) => member.id !== memberId);
@@ -297,196 +270,231 @@ export default function Home() {
     </div>
   );
 
-  const MembersSection = () => (
-    <Card className="border-0 shadow-sm">
-      <CardHeader className="space-y-1 px-4 py-3 sm:px-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <CardTitle className="text-lg">Members Management</CardTitle>
-            <CardDescription>Manage your gym members</CardDescription>
-          </div>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Member
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right">
-              <SheetHeader>
-                <SheetTitle>Add New Member</SheetTitle>
-              </SheetHeader>
-              <form onSubmit={handleAddMember} className="space-y-4 mt-4">
-                <div>
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    value={newMember.name}
-                    onChange={(e) =>
-                      setNewMember({
-                        ...newMember,
-                        name: e.target.value,
-                      })
-                    }
-                    required
-                    placeholder="Enter member name"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={newMember.email}
-                    onChange={(e) =>
-                      setNewMember({
-                        ...newMember,
-                        email: e.target.value,
-                      })
-                    }
-                    required
-                    placeholder="Enter email address"
-                  />
-                </div>
-                <div>
-                  <Label>Plan</Label>
-                  <Select
-                    value={newMember.plan}
-                    onValueChange={(value) =>
-                      setNewMember({ ...newMember, plan: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Plan" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Basic">Basic</SelectItem>
-                      <SelectItem value="Premium">Premium</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Status</Label>
-                  <Select
-                    value={newMember.status}
-                    onValueChange={(value) =>
-                      setNewMember({ ...newMember, status: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Active">Active</SelectItem>
-                      <SelectItem value="Inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button type="submit" className="w-full">
+  const MembersSection = () => {
+    const [sheetOpen, setSheetOpen] = useState(false);
+    const [memberForm, setMemberForm] = useState({
+      name: "",
+      email: "",
+      plan: "Basic",
+      status: "Active",
+    });
+
+    const handleAddMemberSubmit = (e) => {
+      e.preventDefault();
+      const memberToAdd = {
+        ...memberForm,
+        id: Date.now(),
+        joinDate: new Date().toISOString().split("T")[0],
+      };
+
+      const updatedMembers = [...members, memberToAdd];
+      setMembers(updatedMembers);
+      localStorage.setItem("gymMembers", JSON.stringify(updatedMembers));
+
+      setMemberForm({
+        name: "",
+        email: "",
+        plan: "Basic",
+        status: "Active",
+      });
+      setSheetOpen(false);
+    };
+
+    return (
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="space-y-1 px-4 py-3 sm:px-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <CardTitle className="text-lg">Members Management</CardTitle>
+              <CardDescription>Manage your gym members</CardDescription>
+            </div>
+            <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+              <SheetTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
                   Add Member
                 </Button>
-              </form>
-            </SheetContent>
-          </Sheet>
-        </div>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50 hover:bg-gray-50">
-                <TableHead className="w-[200px]">Name</TableHead>
-                <TableHead className="min-w-[200px]">Email</TableHead>
-                <TableHead className="w-[150px]">Plan</TableHead>
-                <TableHead className="w-[100px]">Status</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {getPaginatedMembers().map((member) => (
-                <TableRow key={member.id} className="hover:bg-gray-50">
-                  <TableCell className="font-medium">{member.name}</TableCell>
-                  <TableCell>{member.email}</TableCell>
-                  <TableCell>{member.plan}</TableCell>
-                  <TableCell>{member.status}</TableCell>
-                  <TableCell>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          className="h-8 w-8"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Delete Member</DialogTitle>
-                          <DialogDescription>
-                            Are you sure you want to delete {member.name}?
-                          </DialogDescription>
-                        </DialogHeader>
-                        <DialogFooter>
-                          <DialogClose asChild>
-                            <Button variant="outline">Cancel</Button>
-                          </DialogClose>
+              </SheetTrigger>
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle>Add New Member</SheetTitle>
+                </SheetHeader>
+                <form
+                  onSubmit={handleAddMemberSubmit}
+                  className="space-y-4 mt-4"
+                >
+                  <div>
+                    <Label htmlFor="name">Name</Label>
+                    <Input
+                      id="name"
+                      value={memberForm.name}
+                      onChange={(e) =>
+                        setMemberForm({
+                          ...memberForm,
+                          name: e.target.value,
+                        })
+                      }
+                      required
+                      placeholder="Enter member name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={memberForm.email}
+                      onChange={(e) =>
+                        setMemberForm({
+                          ...memberForm,
+                          email: e.target.value,
+                        })
+                      }
+                      required
+                      placeholder="Enter email address"
+                    />
+                  </div>
+                  <div>
+                    <Label>Plan</Label>
+                    <Select
+                      value={memberForm.plan}
+                      onValueChange={(value) =>
+                        setMemberForm({ ...memberForm, plan: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Plan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Basic">Basic</SelectItem>
+                        <SelectItem value="Premium">Premium</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Status</Label>
+                    <Select
+                      value={memberForm.status}
+                      onValueChange={(value) =>
+                        setMemberForm({ ...memberForm, status: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <SheetFooter>
+                    <Button type="submit" className="w-full">
+                      Add Member
+                    </Button>
+                  </SheetFooter>
+                </form>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50 hover:bg-gray-50">
+                  <TableHead className="w-[200px]">Name</TableHead>
+                  <TableHead className="min-w-[200px]">Email</TableHead>
+                  <TableHead className="w-[150px]">Plan</TableHead>
+                  <TableHead className="w-[100px]">Status</TableHead>
+                  <TableHead className="w-[100px]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {getPaginatedMembers().map((member) => (
+                  <TableRow key={member.id} className="hover:bg-gray-50">
+                    <TableCell className="font-medium">{member.name}</TableCell>
+                    <TableCell>{member.email}</TableCell>
+                    <TableCell>{member.plan}</TableCell>
+                    <TableCell>{member.status}</TableCell>
+                    <TableCell>
+                      <Dialog>
+                        <DialogTrigger asChild>
                           <Button
                             variant="destructive"
-                            onClick={() => handleDeleteMember(member.id)}
+                            size="icon"
+                            className="h-8 w-8"
                           >
-                            Delete
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-
-        <div className="flex items-center justify-between px-4 py-3 border-t">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </Button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => (
-                  <Button
-                    key={page}
-                    variant={currentPage === page ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setCurrentPage(page)}
-                    className="w-8"
-                  >
-                    {page}
-                  </Button>
-                )
-              )}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Delete Member</DialogTitle>
+                            <DialogDescription>
+                              Are you sure you want to delete {member.name}?
+                            </DialogDescription>
+                          </DialogHeader>
+                          <DialogFooter>
+                            <DialogClose asChild>
+                              <Button variant="outline">Cancel</Button>
+                            </DialogClose>
+                            <Button
+                              variant="destructive"
+                              onClick={() => handleDeleteMember(member.id)}
+                            >
+                              Delete
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+          <div className="flex items-center justify-between px-4 py-3 border-t">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                      className="w-8"
+                    >
+                      {page}
+                    </Button>
+                  )
+                )}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   const ShopSection = () => (
     <Card className="border-0 shadow-sm">
